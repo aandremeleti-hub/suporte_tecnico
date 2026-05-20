@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard de Suporte Técnico</title>
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+  />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md h-screen flex overflow-hidden">
+  <div id="page-login" class="hidden w-full h-full"></div>
+  <div id="app-container" class="hidden w-full h-full">
+    <div id="sidebar"></div>
+    <main class="flex-1 ml-0 md:ml-64 flex flex-col h-screen overflow-hidden">
+      <div id="topbar"></div>
+      <div id="content" class="flex-1 overflow-y-auto p-margin-mobile md:p-margin-desktop bg-background">
+        <div id="page-dashboard" class="flex flex-col gap-lg max-w-7xl mx-auto">
+          <div id="status-cards"></div>
+          <div id="filters"></div>
+          <div id="ticket-table"></div>
+        </div>
+        <div id="page-meus-chamados" class="flex flex-col gap-lg max-w-7xl mx-auto hidden">
+        </div>
+        <div id="page-relatorios" class="flex flex-col gap-lg max-w-7xl mx-auto hidden">
+        </div>
+        <div id="page-configuracoes" class="flex flex-col gap-lg max-w-7xl mx-auto hidden">
+        </div>
+        <div class="h-xl"></div>
+      </div>
+    </main>
+    <div id="mobile-bottom-nav"></div>
+    <div id="drawer-overlay" class="fixed inset-0 bg-black/50 z-40 hidden"></div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
