@@ -558,3 +558,23 @@ export async function updateTicket(id, updates) {
 export async function assignTicket(id, assigneeId) {
   return updateTicket(id, { assignee: assigneeId })
 }
+
+// Exclusão de chamado individual
+export async function deleteTicket(id) {
+  const numericId = parseInt(String(id).replace('#', ''), 10)
+  const { error } = await supabase.from('tickets').delete().eq('id', numericId)
+  return { error }
+}
+
+// Exclusão de todos os chamados
+export async function deleteAllTickets() {
+  const { error } = await supabase.from('tickets').delete().neq('id', 0)
+  return { error }
+}
+
+// Verifica se a senha do admin confere (para confirmação de operações críticas)
+export function verifyAdminPassword(password) {
+  const users = getUsers()
+  const admin = users.find(u => u.id === CURRENT_USER.id)
+  return admin && admin.password === password
+}

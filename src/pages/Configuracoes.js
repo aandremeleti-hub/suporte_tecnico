@@ -1,5 +1,5 @@
 import Component from '../lib/Component.js'
-import { CURRENT_USER, setUserFoto, saveProfile, getSystemConfig, saveSystemConfig, resizeImage, getCategories, addCategory, updateCategory, removeCategory, getStatuses, addStatus, updateStatus, removeStatus, getUsers, addUser, updateUser, removeUser, changePassword, adminChangePassword, ROLES } from '../data/tickets.js'
+import { CURRENT_USER, setUserFoto, saveProfile, getSystemConfig, saveSystemConfig, resizeImage, getCategories, addCategory, updateCategory, removeCategory, getStatuses, addStatus, updateStatus, removeStatus, getUsers, addUser, updateUser, removeUser, changePassword, adminChangePassword, ROLES, deleteAllTickets, verifyAdminPassword, fetchAllTickets } from '../data/tickets.js'
 
 const LANGUAGES = [
   { value: 'pt-BR', label: 'Português (Brasil)' },
@@ -57,6 +57,7 @@ export default class Configuracoes extends Component {
         ${tab === 'equipe' ? this._tabEquipe() : ''}
         ${tab === 'gerenciar' ? this._tabGerenciar() : ''}
         ${tab === 'sistema' ? this._tabSistema() : ''}
+        ${tab === 'chamados' ? this._tabChamados() : ''}
         ${tab === 'usuarios' ? this._tabUsuarios() : ''}
       </div>
     `
@@ -73,6 +74,7 @@ export default class Configuracoes extends Component {
       { id: 'equipe', label: 'Equipe', roles: ['admin', 'tecnico'] },
       { id: 'gerenciar', label: 'Gerenciar', roles: ['admin'] },
       { id: 'sistema', label: 'Sistema', roles: ['admin'] },
+      { id: 'chamados', label: 'Chamados', roles: ['admin'] },
       { id: 'usuarios', label: 'Usuários', roles: ['admin'] },
     ]
     return all.filter(t => t.roles.includes(role))
@@ -575,6 +577,38 @@ export default class Configuracoes extends Component {
     `
   }
 
+  _tabChamados() {
+    return `
+      <div>
+        <div class="flex items-center justify-between mb-lg">
+          <h3 class="font-display text-title-lg text-on-surface">Gerenciar Chamados</h3>
+        </div>
+        <div class="bg-surface-container-low rounded-xl p-lg border border-outline-variant max-w-lg">
+          <h4 class="font-label-md text-label-md text-on-surface mb-md">Excluir Todos os Chamados</h4>
+          <p class="font-body-md text-body-md text-on-surface-variant mb-md">
+            Esta ação irá remover permanentemente todos os chamados do sistema.
+            Para confirmar, informe seu usuário e senha de administrador.
+          </p>
+          <div class="flex flex-col gap-md">
+            <div class="flex flex-col gap-xs">
+              <label class="font-label-md text-label-md text-on-surface-variant">Usuário</label>
+              <input id="chamados-delete-user" class="w-full bg-surface-container-high border border-outline-variant rounded-lg py-sm px-md font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" type="text" autocomplete="username" />
+            </div>
+            <div class="flex flex-col gap-xs">
+              <label class="font-label-md text-label-md text-on-surface-variant">Senha</label>
+              <input id="chamados-delete-pass" class="w-full bg-surface-container-high border border-outline-variant rounded-lg py-sm px-md font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" type="password" autocomplete="current-password" />
+            </div>
+            <button id="btn-excluir-todos-chamados" class="bg-error text-on-error rounded-lg py-sm px-md font-label-md text-label-md cursor-pointer hover:opacity-90 transition-opacity self-start flex items-center gap-sm">
+              <span class="material-symbols-outlined text-sm">delete_forever</span>
+              Excluir Todos os Chamados
+            </button>
+            <p id="chamados-status-msg" class="font-label-md text-label-md hidden"></p>
+          </div>
+        </div>
+      </div>
+    `
+  }
+
   afterRender() {
     this.container.querySelectorAll('.config-tab').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -663,6 +697,59 @@ export default class Configuracoes extends Component {
           this.render()
           this.afterRender()
           this._showToast('Configurações do sistema salvas!')
+        })
+      }
+    }
+
+    if (this.state.activeTab === 'chamados') {
+      const btnExcluir = this.container.querySelector('#btn-excluir-todos-chamados')
+      if (btnExcluir) {
+        btnExcluir.addEventListener('click', async () => {
+          const userInput = this.container.querySelector('#chamados-delete-user').value.trim()
+          const passInput = this.container.querySelector('#chamados-delete-pass').value
+          const statusMsg = this.container.querySelector('#chamados-status-msg')
+
+          if (!userInput || !passInput) {
+            statusMsg.className = 'font-label-md text-label-md text-error'
+            statusMsg.textContent = 'Preencha usuário e senha.'
+            statusMsg.classList.remove('hidden')
+            return
+          }
+
+          if (userInput !== CURRENT_USER.username) {
+            statusMsg.className = 'font-label-md text-label-md text-error'
+            statusMsg.textContent = 'Usuário incorreto.'
+            statusMsg.classList.remove('hidden')
+            return
+          }
+
+          if (!verifyAdminPassword(passInput)) {
+            statusMsg.className = 'font-label-md text-label-md text-error'
+            statusMsg.textContent = 'Senha incorreta.'
+            statusMsg.classList.remove('hidden')
+            return
+          }
+
+          if (!confirm('ATENÇÃO: Todos os chamados serão excluídos permanentemente. Deseja continuar?')) return
+
+          btnExcluir.disabled = true
+          btnExcluir.innerHTML = '<span class="material-symbols-outlined text-sm">hourglass_top</span> Excluindo...'
+          statusMsg.className = 'font-label-md text-label-md text-on-surface-variant'
+          statusMsg.textContent = 'Excluindo chamados...'
+          statusMsg.classList.remove('hidden')
+
+          const { error } = await deleteAllTickets()
+          if (error) {
+            statusMsg.className = 'font-label-md text-label-md text-error'
+            statusMsg.textContent = 'Erro ao excluir: ' + error.message
+          } else {
+            statusMsg.className = 'font-label-md text-label-md text-success'
+            statusMsg.textContent = 'Todos os chamados foram excluídos com sucesso!'
+            this.container.querySelector('#chamados-delete-user').value = ''
+            this.container.querySelector('#chamados-delete-pass').value = ''
+          }
+          btnExcluir.disabled = false
+          btnExcluir.innerHTML = '<span class="material-symbols-outlined text-sm">delete_forever</span> Excluir Todos os Chamados'
         })
       }
     }

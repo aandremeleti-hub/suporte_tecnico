@@ -1,5 +1,5 @@
 import Component from '../lib/Component.js'
-import { getCategoryConfig, getPriorityConfig, getStatusConfig } from '../data/tickets.js'
+import { getCategoryConfig, getPriorityConfig, getStatusConfig, CURRENT_USER, deleteTicket } from '../data/tickets.js'
 
 export default class TicketTable extends Component {
   template() {
@@ -90,6 +90,11 @@ export default class TicketTable extends Component {
             <button class="p-xs text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded cursor-pointer btn-atribuir" title="Atribuir" data-id="${ticket.id}">
               <span class="material-symbols-outlined text-[18px]">person_add</span>
             </button>
+            ${CURRENT_USER.role === 'admin' ? `
+            <button class="p-xs text-on-surface-variant hover:text-error hover:bg-error-container/50 rounded cursor-pointer btn-excluir-ticket" title="Excluir" data-id="${ticket.id}">
+              <span class="material-symbols-outlined text-[18px]">delete</span>
+            </button>
+            ` : ''}
             <button class="p-xs text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded cursor-pointer btn-detalhes" title="Ver Detalhes" data-id="${ticket.id}">
               <span class="material-symbols-outlined text-[18px]">visibility</span>
             </button>
@@ -130,6 +135,11 @@ export default class TicketTable extends Component {
               <button class="p-xs text-on-surface-variant hover:text-primary rounded cursor-pointer btn-atribuir" title="Atribuir" data-id="${ticket.id}">
                 <span class="material-symbols-outlined text-[18px]">person_add</span>
               </button>
+              ${CURRENT_USER.role === 'admin' ? `
+              <button class="p-xs text-on-surface-variant hover:text-error rounded cursor-pointer btn-excluir-ticket" title="Excluir" data-id="${ticket.id}">
+                <span class="material-symbols-outlined text-[18px]">delete</span>
+              </button>
+              ` : ''}
               <button class="p-xs text-on-surface-variant hover:text-primary rounded cursor-pointer btn-detalhes" title="Ver Detalhes" data-id="${ticket.id}">
                 <span class="material-symbols-outlined text-[18px]">visibility</span>
               </button>
@@ -157,6 +167,19 @@ export default class TicketTable extends Component {
         if (this.props.onPageChange) {
           this.props.onPageChange(page)
         }
+      })
+    })
+
+    this.container.querySelectorAll('.btn-excluir-ticket').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id
+        if (!confirm(`Tem certeza que deseja excluir o chamado ${id}?`)) return
+        const { error } = await deleteTicket(id)
+        if (error) {
+          alert('Erro ao excluir chamado: ' + error.message)
+          return
+        }
+        if (this.props.onPageChange) this.props.onPageChange(1)
       })
     })
   }
